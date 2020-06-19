@@ -244,6 +244,26 @@ export class WalletDecorator {
                         },
                     };
                 }
+                case type == 'Subscription': {
+                    const token = await this.tokenNameFromId(tx.tx.token);
+                    const amount = readableEther(tx.tx.amount);
+                    return {
+                        fields: [
+                            { key: 'amount',      label: 'Amount' },
+                            { key: 'to',          label: 'To' },
+                            { key: 'row_status',  label: 'Status' },
+                            { key: 'hash',        label: 'Tx hash' },
+                        ],
+                        data: {
+                            ...data,
+                            from: tx.tx.from,
+                            to: tx.tx.to,
+                            token, amount,
+                            startDate: tx.tx.startDate,
+                            endDate: tx.tx.endDate
+                        },
+                    };
+                }
                 case type == 'Withdraw': {
                     const token = await this.tokenNameFromId(tx.tx.token);
                     const amount = readableEther(tx.tx.amount);   

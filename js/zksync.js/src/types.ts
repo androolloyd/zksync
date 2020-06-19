@@ -69,6 +69,20 @@ export interface Transfer {
     signature: Signature;
 }
 
+export interface Subscription {
+    type: "Subscription";
+    accountId: number;
+    from: Address;
+    to: Address;
+    token: number;
+    amount: utils.BigNumberish;
+    fee: utils.BigNumberish;
+    nonce: number;
+    startDate: number;
+    endDate: number;
+    signature: Signature;
+}
+
 export interface Withdraw {
     type: "Withdraw";
     accountId: number;
@@ -132,7 +146,7 @@ export interface Tokens {
 
 export interface Fee {
     // Operation type (amount of chunks in operation differs and impacts the total fee).
-    feeType: "Withdraw" | "Transfer" | "TransferToNew",
+    feeType: "Withdraw" | "Transfer" | "TransferToNew" | "Subscription",
     // Amount of gas used by transaction
     gasTxAmount: utils.BigNumber,
     // Gas price (in wei)

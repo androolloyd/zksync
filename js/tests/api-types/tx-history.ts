@@ -67,6 +67,34 @@ type Transfer = {
     "created_at": string,
 };
 
+type Subscription = {
+    "tx_id": string,
+    "hash": string,
+    "eth_block": null,
+    "pq_id": null,
+    "tx": {
+        "accountId": number,
+        "amount": string,
+        "fee": string,
+        "from": string,
+        "nonce": number,
+        "startDate": number,
+        "endDate": number,
+        "signature": {
+            "pubKey": string,
+            "signature": string
+        },
+        "to": string,
+        "token": string,
+        "type": "Subscription"
+    },
+    "success": boolean,
+    "fail_reason"?: string,
+    "commited": boolean,
+    "verified": boolean,
+    "created_at": string,
+};
+
 type ChangePubKey = {
     "tx_id": string,
     "hash": string,
@@ -113,4 +141,4 @@ type Withdraw =   {
     "created_at": string,
 };
 
-export type Interface = (Deposit | Transfer | Withdraw | ChangePubKey | FullExit)[];
+export type Interface = (Deposit | Transfer | Subscription | Withdraw | ChangePubKey | FullExit)[];

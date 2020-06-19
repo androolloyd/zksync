@@ -133,6 +133,8 @@ export default {
                 let to = "";
                 let token = "";
                 let amount = "";
+                let startDate = "";
+                let endDate = "";
                 let fee = "";
                 let from_explorer_link = "";
                 let to_explorer_link = "";
@@ -169,6 +171,23 @@ export default {
                         token              = tokens[token].syncSymbol;
                         amount             = `${formatToken(tx.op.amount, token)} ${token}`;
                         fee                = `${formatToken(tx.op.fee, token)} ${token}`;
+                        created_at         = tx.created_at;
+                        break;
+                    case "Subscription":
+                        fromAddr           = tx.op.from;
+                        toAddr             = tx.op.to;
+                        from               = shortenHash(tx.op.from, 'unknown from');
+                        to                 = shortenHash(tx.op.to, 'unknown to');
+                        from_explorer_link = `${this.routerBase}accounts/${tx.op.from}`;
+                        to_explorer_link   = `${this.routerBase}accounts/${tx.op.to}`;
+                        from_onchain_icon  = '';
+                        to_onchain_icon    = '';
+                        token              = tx.op.token;
+                        token              = tokens[token].syncSymbol;
+                        amount             = `${formatToken(tx.op.amount, token)} ${token}`;
+                        fee                = `${formatToken(tx.op.fee, token)} ${token}`;
+                        startDate          = tx.op.startDate;
+                        endDate            = tx.op.endDate;
                         created_at         = tx.created_at;
                         break;
                     case "ChangePubKey":

@@ -150,6 +150,10 @@ pub const BLOCK_NUMBER_BIT_WIDTH: usize = 32;
 pub const AMOUNT_EXPONENT_BIT_WIDTH: usize = 5;
 pub const AMOUNT_MANTISSA_BIT_WIDTH: usize = 35;
 
+/// Amount date widths
+pub const DATE_EXPONENT_BIT_WIDTH: usize = 5;
+pub const DATE_MANTISSA_BIT_WIDTH: usize = 35;
+
 /// Fee bit widths
 pub const FEE_EXPONENT_BIT_WIDTH: usize = 5;
 pub const FEE_MANTISSA_BIT_WIDTH: usize = 11;

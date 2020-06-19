@@ -18,6 +18,28 @@ type Transfer = {
     "created_at": string,
 };
 
+type Subscription = {
+    "tx_hash": string,
+    "block_number": number,
+    "op": {
+        "amount": string,
+        "fee": string,
+        "from": string,
+        "accountId": number,
+        "nonce": number,
+        "startDate": number,
+        "endDate": number,
+        "signature": {
+            "pubKey": string,
+            "signature": string,
+        },
+        "to": string,
+        "token": number,
+        "type": "Subscription"
+    },
+    "created_at": string,
+};
+
 type Deposit = {
     "tx_hash": string,
     "block_number": number,
@@ -83,4 +105,4 @@ type FullExit = {
     "created_at": string,
 };
 
-export type Interface = (Deposit | Transfer | Withdraw | ChangePubKey | FullExit)[];
+export type Interface = (Deposit | Transfer | Subscription | Withdraw | ChangePubKey | FullExit)[];

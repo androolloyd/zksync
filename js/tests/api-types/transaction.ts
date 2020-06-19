@@ -47,6 +47,37 @@ type Transfer = {
     }
 }
 
+type Subscription = {
+    "tx_type": "Subscription",
+    "from": string,
+    "to": string,
+    "token": number,
+    "amount": string,
+    "fee": string,
+    "block_number": number,
+    "nonce": number,
+    "startDate": number,
+    "endDate": number,
+    "created_at": string,
+    "fail_reason"?: string,
+    "tx": {
+        "amount": string,
+        "fee": string,
+        "from": string,
+        "accountId": number,
+        "nonce": number,
+        "startDate": number,
+        "endDate": number,
+        "signature": {
+            "pubKey": string,
+            "signature": string,
+        },
+        "to": string,
+        "token": number,
+        "type": "Subscription"
+    }
+}
+
 type Withdraw = {
     "tx_type": "Withdraw",
     "from": string,
@@ -119,4 +150,4 @@ type FullExit = {
     }
 }
 
-export type Interface = (ChangePubKey | Transfer | Withdraw | Deposit | FullExit);
+export type Interface = (ChangePubKey | Transfer | Subscription | Withdraw | Deposit | FullExit);

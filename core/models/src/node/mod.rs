@@ -21,8 +21,8 @@ pub use web3::types::{H256, U128, U256};
 pub use self::account::{Account, AccountUpdate, PubKeyHash};
 pub use self::block::{ExecutedOperations, ExecutedPriorityOp, ExecutedTx};
 pub use self::operations::{
-    ChangePubKeyOp, CloseOp, DepositOp, FranklinOp, FullExitOp, TransferOp, TransferToNewOp,
-    WithdrawOp,
+    ChangePubKeyOp, CloseOp, DepositOp, FranklinOp, FullExitOp, SubscriptionOp, TransferOp,
+    TransferToNewOp, WithdrawOp,
 };
 pub use self::priority_ops::{Deposit, FranklinPriorityOp, FullExit, PriorityOp};
 pub use self::tokens::{Token, TokenGenesisListItem, TokenLike, TokenPrice, TxFeeTypes};
@@ -65,12 +65,21 @@ pub type TokenId = u16;
 pub type AccountId = u32;
 pub type BlockNumber = u32;
 pub type Nonce = u32;
+pub type Date = u32;
 
 pub fn pack_token_amount(amount: &BigUint) -> Vec<u8> {
     pack_as_float(
         amount,
         params::AMOUNT_EXPONENT_BIT_WIDTH,
         params::AMOUNT_MANTISSA_BIT_WIDTH,
+    )
+}
+
+pub fn pack_date(date: &BigUint) -> Vec<u8> {
+    pack_as_float(
+        amount,
+        params::DATE_EXPONENT_BIT_WIDTH,
+        params::DATE_MANTISSA_BIT_WIDTH,
     )
 }
 
@@ -89,6 +98,9 @@ pub fn is_token_amount_packable(amount: &BigUint) -> bool {
 pub fn is_fee_amount_packable(amount: &BigUint) -> bool {
     Some(amount.clone()) == unpack_fee_amount(&pack_fee_amount(amount))
 }
+pub fn is_date_packable(date: &BigUint) -> bool {
+    Some(date.clone()) == unpack_fee_amount(&pack_fee_amount(amount))
+}
 
 pub fn unpack_token_amount(data: &[u8]) -> Option<BigUint> {
     unpack_float(
@@ -104,6 +116,15 @@ pub fn unpack_fee_amount(data: &[u8]) -> Option<BigUint> {
         data,
         params::FEE_EXPONENT_BIT_WIDTH,
         params::FEE_MANTISSA_BIT_WIDTH,
+    )
+    .and_then(BigUint::from_u128)
+}
+
+pub fn unpack_date(data: &[u8]) -> Option<BigUint> {
+    unpack_float(
+        data,
+        params::DATE_EXPONENT_BIT_WIDTH,
+        params::DATE_MANTISSA_BIT_WIDTH,
     )
     .and_then(BigUint::from_u128)
 }

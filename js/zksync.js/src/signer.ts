@@ -11,7 +11,7 @@ import {
     getEthSignatureType
 } from "./utils";
 import BN = require("bn.js");
-import { Address, CloseAccount, PubKeyHash, Transfer, Withdraw } from "./types";
+import {Address, CloseAccount, PubKeyHash, Subscription, Transfer, Withdraw} from "./types";
 
 const MAX_NUMBER_OF_TOKENS = 4096;
 const MAX_NUMBER_OF_ACCOUNTS = 1 << 24;
@@ -66,6 +66,57 @@ export class Signer {
             amount: utils.bigNumberify(transfer.amount).toString(),
             fee: utils.bigNumberify(transfer.fee).toString(),
             nonce: transfer.nonce,
+            signature
+        };
+    }
+    signSyncSubscription(subscription: {
+        accountId: number;
+        from: Address;
+        to: Address;
+        tokenId: number;
+        amount: utils.BigNumberish;
+        fee: utils.BigNumberish;
+        nonce: number;
+        startDate: number;
+        endDate: number;
+    }): Subscription {
+
+        const type = Buffer.from([5]); // tx type
+        const accountId = serializeAccountId(subscription.accountId);
+        const from = serializeAddress(subscription.from);
+        const to = serializeAddress(subscription.to);
+        const token = serializeTokenId(subscription.tokenId);
+        const amount = serializeAmountPacked(subscription.amount);
+        const fee = serializeFeePacked(subscription.fee);
+        const nonce = serializeNonce(subscription.nonce);
+        const startDate = serializeDate(subscription.startDate);
+        const endDate = serializeDate(subscription.nonce);
+        const msgBytes = Buffer.concat([
+            type,
+            accountId,
+            from,
+            to,
+            token,
+            amount,
+            fee,
+            startDate,
+            endDate,
+            nonce
+        ]);
+
+        const signature = signTransactionBytes(this.privateKey, msgBytes);
+
+        return {
+            type: "Subscription",
+            accountId: subscription.accountId,
+            from: subscription.from,
+            to: subscription.to,
+            token: subscription.tokenId,
+            amount: utils.bigNumberify(subscription.amount).toString(),
+            fee: utils.bigNumberify(subscription.fee).toString(),
+            nonce: subscription.nonce,
+            startDate: subscription.nonce,
+            endDate: subscription.nonce,
             signature
         };
     }
@@ -209,5 +260,14 @@ export function serializeNonce(nonce: number): Buffer {
     }
     const buff = Buffer.alloc(4);
     buff.writeUInt32BE(nonce, 0);
+    return buff;
+}
+
+export function serializeDate(date: number): Buffer {
+    if (date < 0) {
+        throw new Error("Negative date");
+    }
+    const buff = Buffer.alloc(4);
+    buff.writeUInt32BE(date, 0);
     return buff;
 }
