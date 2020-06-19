@@ -75,7 +75,7 @@ pub fn pack_token_amount(amount: &BigUint) -> Vec<u8> {
     )
 }
 
-pub fn pack_date(date: &BigUint) -> Vec<u8> {
+pub fn pack_date(date: &u32) -> Vec<u8> {
     pack_as_float(
         amount,
         params::DATE_EXPONENT_BIT_WIDTH,

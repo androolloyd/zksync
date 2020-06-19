@@ -1,8 +1,9 @@
-use super::{Nonce, TokenId};
+use super::{Date, Nonce, TokenId};
 
 use crate::node::{
-    is_fee_amount_packable, is_token_amount_packable, pack_fee_amount, pack_token_amount,
-    public_key_from_private, AccountId, CloseOp, TransferOp, WithdrawOp,
+    is_fee_amount_packable, is_token_amount_packable, pack_date, pack_fee_amount,
+    pack_token_amount, public_key_from_private, AccountId, CloseOp, SubscriptionOp, TransferOp,
+    WithdrawOp,
 };
 use crypto::{digest::Digest, sha2::Sha256};
 use num::{BigUint, ToPrimitive};
@@ -221,6 +222,150 @@ impl Transfer {
             to = self.to,
             nonce = self.nonce,
             fee = format_units(&self.fee, decimals),
+            account_id = self.account_id,
+        )
+    }
+}
+
+/// Signed by user.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Subscription {
+    pub account_id: AccountId,
+    pub from: Address,
+    pub to: Address,
+    pub token: TokenId,
+    #[serde(with = "BigUintSerdeAsRadix10Str")]
+    pub amount: BigUint,
+    #[serde(with = "BigUintSerdeAsRadix10Str")]
+    pub fee: BigUint,
+    pub start_date: Date,
+    pub end_date: Date,
+    pub nonce: Nonce,
+    pub signature: TxSignature,
+    #[serde(skip)]
+    cached_signer: VerifiedSignatureCache,
+}
+
+impl Subscription {
+    const TX_TYPE: u8 = 5;
+
+    #[allow(clippy::too_many_arguments)]
+    /// Creates subscription from parts
+    /// signature is optional, because sometimes we don't know it (i.e. data_restore)
+    pub fn new(
+        account_id: AccountId,
+        from: Address,
+        to: Address,
+        token: TokenId,
+        amount: BigUint,
+        fee: BigUint,
+        start_date: Date,
+        end_date: Date,
+        nonce: Nonce,
+        signature: Option<TxSignature>,
+    ) -> Self {
+        let mut tx = Self {
+            account_id,
+            from,
+            to,
+            token,
+            amount,
+            fee,
+            start_date: start_date,
+            end_date: end_date,
+            nonce,
+            signature: signature.clone().unwrap_or_default(),
+            cached_signer: VerifiedSignatureCache::NotCached,
+        };
+        if signature.is_some() {
+            tx.cached_signer = VerifiedSignatureCache::Cached(tx.verify_signature());
+        }
+        tx
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    /// Creates signed transaction using private key, checks for correcteness
+    pub fn new_signed(
+        account_id: AccountId,
+        from: Address,
+        to: Address,
+        token: TokenId,
+        amount: BigUint,
+        fee: BigUint,
+        start_date: Date,
+        end_date: Date,
+        nonce: Nonce,
+        private_key: &PrivateKey<Engine>,
+    ) -> Result<Self, failure::Error> {
+        let mut tx = Self::new(
+            account_id, from, to, token, amount, fee, start_date, end_date, nonce, None,
+        );
+        tx.signature = TxSignature::sign_musig(private_key, &tx.get_bytes());
+        if !tx.check_correctness() {
+            bail!("Transfer is incorrect, check amounts");
+        }
+        Ok(tx)
+    }
+
+    pub fn get_bytes(&self) -> Vec<u8> {
+        let mut out = Vec::new();
+        out.extend_from_slice(&[Self::TX_TYPE]);
+        out.extend_from_slice(&self.account_id.to_be_bytes());
+        out.extend_from_slice(&self.from.as_bytes());
+        out.extend_from_slice(&self.to.as_bytes());
+        out.extend_from_slice(&self.token.to_be_bytes());
+        out.extend_from_slice(&pack_token_amount(&self.amount));
+        out.extend_from_slice(&pack_fee_amount(&self.fee));
+        out.extend_from_slice(&pack_date(&self.start_date));
+        out.extend_from_slice(&pack_date(&self.end_date));
+        out.extend_from_slice(&self.nonce.to_be_bytes());
+        out
+    }
+
+    pub fn check_correctness(&mut self) -> bool {
+        let mut valid = self.amount <= BigUint::from(u128::max_value())
+            && self.fee <= BigUint::from(u128::max_value())
+            && is_token_amount_packable(&self.amount)
+            && is_fee_amount_packable(&self.fee)
+            && self.account_id <= max_account_id()
+            && self.token <= max_token_id();
+        // TODO: check for dates here
+        if valid {
+            let signer = self.verify_signature();
+            valid = valid && signer.is_some();
+            self.cached_signer = VerifiedSignatureCache::Cached(signer);
+        };
+        valid
+    }
+
+    pub fn verify_signature(&self) -> Option<PubKeyHash> {
+        if let VerifiedSignatureCache::Cached(cached_signer) = &self.cached_signer {
+            cached_signer.clone()
+        } else if let Some(pub_key) = self.signature.verify_musig(&self.get_bytes()) {
+            Some(PubKeyHash::from_pubkey(&pub_key))
+        } else {
+            None
+        }
+    }
+
+    /// Get message that should be signed by Ethereum keys of the account for 2F authentication.
+    pub fn get_ethereum_sign_message(&self, token_symbol: &str, decimals: u8) -> String {
+        format!(
+            "Subscription {amount} {token}\n\
+            To: {to:?}\n\
+            Nonce: {nonce}\n\
+            StartDate: {start_date}\n\
+            EndDate: {end_date}\n\
+            Fee: {fee} {token}\n\
+            Account Id: {account_id}",
+            amount = format_units(&self.amount, decimals),
+            token = token_symbol,
+            to = self.to,
+            nonce = self.nonce,
+            fee = format_units(&self.fee, decimals),
+            start_date = self.start_date,
+            end_date = self.end_date,
             account_id = self.account_id,
         )
     }

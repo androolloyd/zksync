@@ -248,6 +248,7 @@ impl TransferOp {
         })
     }
 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SubscriptionOp {
     pub tx: Transfer,
